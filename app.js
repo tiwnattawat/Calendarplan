@@ -218,7 +218,7 @@ const Router = {
     // Toggle top-level shells
     const isAdminPage = ADMIN_PAGES.includes(page);
     document.getElementById('adminShell').classList.toggle('hidden', !isAdminPage);
-    document.getElementById('publicTopbar').classList.toggle('hidden', isAdminPage);
+    document.getElementById('publicTopbar').classList.toggle('hidden', isAdminPage || page === 'login');
 
     // Toggle views
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
