@@ -12,7 +12,7 @@
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -40,8 +40,8 @@
     theme: {
       extend: {
         fontFamily: {
-          display: ['Playfair Display', 'serif'],
-          body: ['Inter', 'sans-serif'],
+          display: ['Kanit', 'Prompt', 'sans-serif'],
+          body: ['Prompt', 'Plus Jakarta Sans', 'sans-serif'],
           mono: ['"JetBrains Mono"', 'monospace'],
         },
         letterSpacing: {
@@ -122,7 +122,7 @@
   }
   html,body{ height:100%; }
   body{
-    font-family:'Inter',sans-serif;
+    font-family:'Prompt','Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;
     background:var(--bg-color);
     color:var(--text-color);
     -webkit-font-smoothing:antialiased;
@@ -134,7 +134,7 @@
     --text-color:#e5e5e5;
     --card-bg:rgba(23,23,23,0.7);
   }
-  h1,h2,h3,h4,.font-display{ font-family:'Playfair Display',serif; letter-spacing:0.03em; }
+  h1,h2,h3,h4,.font-display{ font-family:'Kanit','Prompt',sans-serif; letter-spacing:0.02em; }
   .font-mono-num{ font-family:'JetBrains Mono',monospace; }
 
   ::selection{ background:var(--gold-500); color:#0a0a0a; }
