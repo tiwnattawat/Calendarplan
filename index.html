@@ -459,51 +459,59 @@
      2) LOGIN (Admin only)
 ========================================================= -->
 <main id="view-login" class="view">
-  <div class="min-h-screen flex items-center justify-center px-4 py-8 sm:py-12 relative overflow-hidden bg-slate-950">
+  <div class="min-h-screen flex items-center justify-center px-4 py-8 sm:py-12 relative overflow-hidden" style="background-color: #0b0f19;">
     <!-- Ambient Glow Effects -->
     <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none"></div>
 
-    <div class="w-full max-w-md p-8 sm:p-10 relative z-10 bg-white dark:bg-zinc-900 border-2 border-gold-500/40 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] rounded-[28px]">
+    <!-- Login Card: Explicit Slate-800 with Champagne Gold Border -->
+    <div class="w-full max-w-md p-8 sm:p-10 relative z-10 rounded-[28px]" style="background-color: #1e293b; border: 2px solid #d4af37; box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 25px rgba(212, 175, 55, 0.15);">
+      
+      <!-- Header -->
       <div class="flex flex-col items-center text-center mb-8">
-        <img src="https://act.lru.ac.th/images/lru.png" alt="LRU Logo" class="w-20 h-20 object-contain mb-4 drop-shadow-md">
-        <h1 class="font-display text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-wide">เข้าสู่ระบบผู้ดูแล</h1>
-        <p class="text-xs font-bold text-gold-600 dark:text-gold-400 mt-1.5 tracking-widest uppercase">ระบบบริหารจัดการห้องประชุม</p>
+        <img src="https://act.lru.ac.th/images/lru.png" alt="LRU Logo" class="w-20 h-20 object-contain mb-4 drop-shadow-[0_4px_12px_rgba(212,175,55,0.3)]">
+        <h1 class="font-display text-2xl sm:text-3xl font-bold tracking-wide" style="color: #ffffff;">เข้าสู่ระบบผู้ดูแล</h1>
+        <p class="text-xs font-bold mt-1.5 tracking-widest uppercase" style="color: #e6c762;">ระบบบริหารจัดการห้องประชุม</p>
       </div>
 
-      <form id="loginForm" class="space-y-5" onsubmit="Auth.handleLogin(event)">
+      <!-- Form -->
+      <form id="loginForm" class="space-y-6" onsubmit="Auth.handleLogin(event)">
+        <!-- Username Field -->
         <div>
-          <label class="lbl !text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-2">ชื่อผู้ใช้ / USERNAME</label>
+          <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color: #ffffff;">ชื่อผู้ใช้ / USERNAME</label>
           <div class="relative group">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-600 dark:text-amber-400 font-bold">
-              <i class="fa-solid fa-user"></i>
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" style="color: #d4af37;">
+              <i class="fa-solid fa-user text-base"></i>
             </div>
-            <input required id="loginUser" class="field !pl-10 !py-3 !rounded-xl !bg-slate-100 dark:!bg-zinc-800 !text-slate-900 dark:!text-white !border-slate-300 dark:!border-zinc-700 focus:!border-gold-500 focus:!bg-white dark:focus:!bg-zinc-900 placeholder:!text-slate-400 dark:placeholder:!text-zinc-500 font-semibold transition-all shadow-sm" placeholder="กรอกชื่อผู้ใช้..." autocomplete="username">
+            <input required id="loginUser" class="w-full pl-10 pr-4 py-3 rounded-xl font-semibold text-sm transition-all focus:outline-none" style="background-color: #ffffff; color: #0f172a; border: 2px solid #cbd5e1;" placeholder="กรอกชื่อผู้ใช้..." autocomplete="username">
           </div>
         </div>
 
+        <!-- Password Field -->
         <div>
-          <label class="lbl !text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-2">รหัสผ่าน / PASSWORD</label>
+          <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color: #ffffff;">รหัสผ่าน / PASSWORD</label>
           <div class="relative group">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-600 dark:text-amber-400 font-bold">
-              <i class="fa-solid fa-lock"></i>
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none" style="color: #d4af37;">
+              <i class="fa-solid fa-lock text-base"></i>
             </div>
-            <input required id="loginPass" type="password" class="field !pl-10 !pr-10 !py-3 !rounded-xl !bg-slate-100 dark:!bg-zinc-800 !text-slate-900 dark:!text-white !border-slate-300 dark:!border-zinc-700 focus:!border-gold-500 focus:!bg-white dark:focus:!bg-zinc-900 placeholder:!text-slate-400 dark:placeholder:!text-zinc-500 font-semibold transition-all shadow-sm" placeholder="••••••••" autocomplete="current-password">
-            <button type="button" onclick="UI.togglePassword('loginPass', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 transition-colors">
-              <i class="fa-regular fa-eye"></i>
+            <input required id="loginPass" type="password" class="w-full pl-10 pr-10 py-3 rounded-xl font-semibold text-sm transition-all focus:outline-none" style="background-color: #ffffff; color: #0f172a; border: 2px solid #cbd5e1;" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" onclick="UI.togglePassword('loginPass', this)" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 transition-colors" style="color: #64748b;">
+              <i class="fa-regular fa-eye text-base"></i>
             </button>
           </div>
         </div>
 
-        <p id="loginError" class="hidden text-sm text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-950/60 rounded-xl px-4 py-3 border border-red-200 dark:border-red-500/40 flex items-center gap-2 animate-fadeUp">
-          <i class="fa-solid fa-circle-exclamation text-lg text-red-500"></i><span></span>
+        <!-- Error Alert -->
+        <p id="loginError" class="hidden text-sm rounded-xl px-4 py-3 border flex items-center gap-2 animate-fadeUp" style="background-color: #450a0a; color: #fca5a5; border-color: #ef4444;">
+          <i class="fa-solid fa-circle-exclamation text-lg" style="color: #f87171;"></i><span></span>
         </p>
 
+        <!-- Action Buttons -->
         <div class="pt-2 flex flex-col gap-3">
-          <button type="submit" class="btn btn-gold w-full justify-center !py-3.5 !rounded-xl !text-sm font-bold shadow-lg shadow-gold-500/30 hover:shadow-gold-500/50 group">
-            เข้าสู่ระบบ <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+          <button type="submit" class="w-full justify-center py-3.5 rounded-xl text-sm font-bold shadow-lg transition-all duration-300 flex items-center gap-2 group" style="background: linear-gradient(135deg, #e6c762, #b58843); color: #000000; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);">
+            เข้าสู่ระบบ <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
           </button>
-          <button type="button" onclick="Router.go('public')" class="btn btn-ghost w-full justify-center !py-3 !rounded-xl !text-slate-600 dark:!text-slate-300 hover:!text-slate-900 dark:hover:!text-white border-slate-300 dark:border-zinc-700 hover:border-gold-500">
-            <i class="fa-solid fa-house text-xs mr-2 opacity-70"></i> กลับหน้าหลัก
+          <button type="button" onclick="Router.go('public')" class="w-full justify-center py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2" style="background-color: #334155; color: #ffffff; border: 1px solid #475569;">
+            <i class="fa-solid fa-house text-xs opacity-70"></i> กลับหน้าหลัก
           </button>
         </div>
       </form>
