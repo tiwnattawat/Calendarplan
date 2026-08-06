@@ -520,36 +520,48 @@
     <div class="flex items-center gap-3 px-5 h-16 border-b border-black/5 dark:border-white/10">
       <img src="https://act.lru.ac.th/images/lru.png" alt="LRU Logo" class="w-10 h-10 object-contain drop-shadow-sm">
       <div class="leading-tight">
-        <p class="font-display font-semibold text-brand-800 dark:text-white text-sm">Admin Panel</p>
-        <p class="text-[10px] text-brand-500 dark:text-brand-300">ระบบห้องประชุม</p>
+        <p class="font-display font-bold text-brand-900 dark:text-white text-base tracking-wide">Admin Panel</p>
+        <p class="text-[11px] text-gold-500 font-medium">ระบบบริหารจัดการห้องประชุม</p>
       </div>
       <button onclick="UI.closeSidebar()" class="ml-auto md:hidden text-brand-500 dark:text-white/70"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-none">
+    <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-none">
       <a href="#" data-page="dashboard" onclick="Router.go('dashboard');return false;" class="side-link"><i class="fa-solid fa-gauge-high"></i>แดชบอร์ด</a>
-      <a href="#" data-page="calendar" onclick="Router.go('calendar');return false;" class="side-link"><i class="fa-regular fa-calendar-days"></i>ปฏิทิน</a>
+      <a href="#" data-page="calendar" onclick="Router.go('calendar');return false;" class="side-link"><i class="fa-regular fa-calendar-days"></i>ปฏิทินการจอง</a>
       <a href="#" data-page="manage" onclick="Router.go('manage');return false;" class="side-link"><i class="fa-solid fa-list-check"></i>จัดการการจอง</a>
-      <a href="#" data-page="report" onclick="Router.go('report');return false;" class="side-link"><i class="fa-solid fa-chart-column"></i>รายงาน</a>
-      <a href="#" data-page="settings" onclick="Router.go('settings');return false;" class="side-link"><i class="fa-solid fa-gear"></i>ตั้งค่า</a>
-      <div class="pt-2 mt-2 border-t border-black/5 dark:border-white/10">
-        <a href="#" onclick="Router.go('public');return false;" class="side-link"><i class="fa-solid fa-house"></i>หน้าเว็บสาธารณะ</a>
+      <a href="#" data-page="report" onclick="Router.go('report');return false;" class="side-link"><i class="fa-solid fa-chart-column"></i>รายงานและสถิติ</a>
+      <a href="#" data-page="settings" onclick="Router.go('settings');return false;" class="side-link"><i class="fa-solid fa-gear"></i>ตั้งค่าระบบ</a>
+      <div class="pt-3 mt-3 border-t border-black/5 dark:border-white/10">
+        <a href="#" onclick="Router.go('public');return false;" class="side-link text-brand-500 hover:text-gold-500"><i class="fa-solid fa-arrow-left font-normal"></i>หน้าเว็บสาธารณะ</a>
       </div>
     </nav>
-    <div class="p-3 border-t border-black/5 dark:border-white/10">
-      <button onclick="Auth.logout()" class="side-link w-full text-left !text-red-500 dark:!text-red-300"><i class="fa-solid fa-right-from-bracket"></i>ออกจากระบบ</button>
+    <div class="p-4 border-t border-black/5 dark:border-white/10 mt-auto bg-black/5 dark:bg-white/[0.02]">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-gold-600 to-gold-400 text-black grid place-items-center font-bold text-xs shadow-md shadow-gold-500/20">AD</div>
+        <div class="leading-tight overflow-hidden">
+          <p class="text-xs font-semibold text-brand-900 dark:text-white truncate">ผู้ดูแลระบบ</p>
+          <p class="text-[10px] text-emerald-500 font-medium flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ออนไลน์</p>
+        </div>
+      </div>
+      <button onclick="Auth.logout()" class="w-full btn btn-ghost !py-2 !px-3 !text-xs justify-between text-red-500 hover:bg-red-500/10 hover:text-red-600 dark:hover:bg-red-500/20 border-red-500/20">
+        <span>ออกจากระบบ</span> <i class="fa-solid fa-right-from-bracket text-xs"></i>
+      </button>
     </div>
   </aside>
 
   <div class="md:pl-64 flex-1 flex flex-col min-h-screen w-full">
-    <header id="adminTopbar" class="sticky top-0 z-30 bg-white/90 dark:bg-brand-900/90 backdrop-blur border-b border-black/5 dark:border-white/10 h-16 flex items-center px-4 sm:px-6 gap-3">
+    <header id="adminTopbar" class="sticky top-0 z-30 bg-white/80 dark:bg-brand-900/80 backdrop-blur-xl border-b border-black/5 dark:border-white/10 h-16 flex items-center px-4 sm:px-6 gap-3 shadow-sm">
       <button onclick="UI.openSidebar()" class="md:hidden btn-ghost btn !p-2"><i class="fa-solid fa-bars"></i></button>
-      <h1 id="adminPageTitle" class="font-display font-semibold text-lg text-brand-800 dark:text-white">แดชบอร์ด</h1>
-      <div class="ml-auto flex items-center gap-2">
-        <button onclick="UI.toggleDark()" class="btn-ghost btn !px-3"><i class="fa-solid fa-circle-half-stroke"></i></button>
-        <div class="flex items-center gap-2 pl-2 border-l border-black/10 dark:border-white/10">
-          <div class="w-8 h-8 rounded-full bg-brand-600 text-white grid place-items-center text-xs font-semibold">AD</div>
-          <span class="text-sm hidden sm:inline">ผู้ดูแลระบบ</span>
-        </div>
+      <div>
+        <h1 id="adminPageTitle" class="font-display font-bold text-xl text-brand-900 dark:text-white tracking-wide">แดชบอร์ด</h1>
+      </div>
+      <div class="ml-auto flex items-center gap-3">
+        <button onclick="Booking.openForm(null)" class="btn btn-gold !py-2 !px-3.5 !text-xs hidden sm:inline-flex shadow-sm">
+          <i class="fa-solid fa-plus"></i>เพิ่มการจองด่วน
+        </button>
+        <button onclick="UI.toggleDark()" class="btn-ghost btn !p-2.5 !rounded-xl" title="สลับธีม">
+          <i class="fa-solid fa-circle-half-stroke text-sm"></i>
+        </button>
       </div>
     </header>
 
@@ -557,27 +569,56 @@
 
       <!-- 3) DASHBOARD -->
       <section id="view-dashboard" class="view">
-        <p id="dashDateLabel" class="text-sm text-brand-500 dark:text-brand-300 mb-4"></p>
+        <p id="dashDateLabel" class="text-sm font-medium text-brand-500 dark:text-brand-300 mb-5 flex items-center gap-2">
+          <i class="fa-regular fa-calendar text-gold-500"></i><span></span>
+        </p>
+        
+        <!-- Modern Stat Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="card p-4">
-            <p class="text-xs text-brand-600 dark:text-brand-300 font-medium mb-1">สถานะห้องตอนนี้</p>
-            <p class="font-display text-2xl font-bold text-ok" id="statFree">–</p>
-            <p class="text-[11px] text-brand-500 dark:text-brand-400 mt-1 truncate" id="statFreeSub">อัปเดตล่าสุด</p>
+          <div class="card p-5 relative overflow-hidden group hover:border-emerald-500/40 transition-all duration-500">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-brand-600 dark:text-brand-300 tracking-wide uppercase">สถานะห้องตอนนี้</span>
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 grid place-items-center text-base group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-door-open"></i>
+              </div>
+            </div>
+            <p class="font-display text-3xl font-bold text-emerald-500 dark:text-emerald-400" id="statFree">–</p>
+            <p class="text-[12px] text-brand-500 dark:text-brand-400 mt-2 flex items-center gap-1.5 truncate" id="statFreeSub">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> อัปเดตล่าสุด
+            </p>
           </div>
-          <div class="card p-4">
-            <p class="text-xs text-brand-600 dark:text-brand-300 font-medium mb-1">รายการจองวันนี้</p>
-            <p class="font-display text-2xl font-bold text-brand-800 dark:text-white" id="statToday">–</p>
-            <p class="text-[11px] text-brand-500 dark:text-brand-400 mt-1">การจองทั้งหมดในวันนี้</p>
+
+          <div class="card p-5 relative overflow-hidden group hover:border-gold-500/40 transition-all duration-500">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-brand-600 dark:text-brand-300 tracking-wide uppercase">รายการจองวันนี้</span>
+              <div class="w-10 h-10 rounded-xl bg-gold-500/10 text-gold-500 grid place-items-center text-base group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-calendar-check"></i>
+              </div>
+            </div>
+            <p class="font-display text-3xl font-bold text-brand-900 dark:text-white" id="statToday">–</p>
+            <p class="text-[12px] text-brand-500 dark:text-brand-400 mt-2">รายการจองทั้งหมดในวันนี้</p>
           </div>
-          <div class="card p-4">
-            <p class="text-xs text-brand-600 dark:text-brand-300 font-medium mb-1">รวมชั่วโมงใช้งาน</p>
-            <p class="font-display text-2xl font-bold text-gold-600 dark:text-gold-400" id="statHours">–</p>
-            <p class="text-[11px] text-brand-500 dark:text-brand-400 mt-1">ชั่วโมง (วันนี้)</p>
+
+          <div class="card p-5 relative overflow-hidden group hover:border-amber-500/40 transition-all duration-500">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-brand-600 dark:text-brand-300 tracking-wide uppercase">รวมชั่วโมงใช้งาน</span>
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 grid place-items-center text-base group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-clock"></i>
+              </div>
+            </div>
+            <p class="font-display text-3xl font-bold text-gold-500 dark:text-gold-400" id="statHours">–</p>
+            <p class="text-[12px] text-brand-500 dark:text-brand-400 mt-2">ชั่วโมงใช้งานรวมวันนี้</p>
           </div>
-          <div class="card p-4">
-            <p class="text-xs text-brand-600 dark:text-brand-300 font-medium mb-1">อัตราความหนาแน่น</p>
-            <p class="font-display text-2xl font-bold text-brand-800 dark:text-white" id="statUtil">–</p>
-            <p class="text-[11px] text-brand-500 dark:text-brand-400 mt-1">เทียบกับเวลาทำการ</p>
+
+          <div class="card p-5 relative overflow-hidden group hover:border-indigo-500/40 transition-all duration-500">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-brand-600 dark:text-brand-300 tracking-wide uppercase">อัตราความหนาแน่น</span>
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 grid place-items-center text-base group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-chart-pie"></i>
+              </div>
+            </div>
+            <p class="font-display text-3xl font-bold text-brand-900 dark:text-white" id="statUtil">–</p>
+            <p class="text-[12px] text-brand-500 dark:text-brand-400 mt-2">เทียบสัดส่วนเวลาทำการ</p>
           </div>
         </div>
 

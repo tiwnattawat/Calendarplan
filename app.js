@@ -418,14 +418,18 @@ const Dashboard = {
     document.getElementById('statUtil').textContent = util + '%';
 
     document.getElementById('dashTodayList').innerHTML = today.length ? today.map(b=>`
-      <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-500/5">
-        <div class="w-2 h-10 rounded-full" style="background:${roomColor(b.roomId)}"></div>
+      <div class="flex items-center gap-4 p-3.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] hover:bg-gold-500/10 border border-black/5 dark:border-white/5 transition-all duration-300 group">
+        <div class="w-2.5 h-10 rounded-full shadow-sm" style="background:${roomColor(b.roomId)}"></div>
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium truncate">${escapeHTML(b.title)}</p>
-          <p class="text-xs text-brand-400">${escapeHTML(roomName(b.roomId))} &middot; ${escapeHTML(b.owner)}</p>
+          <p class="text-sm font-semibold text-brand-900 dark:text-white truncate group-hover:text-gold-600 dark:group-hover:text-gold-400 transition-colors">${escapeHTML(b.title)}</p>
+          <p class="text-xs text-brand-500 dark:text-brand-400 mt-0.5"><i class="fa-regular fa-user mr-1.5 opacity-60"></i>${escapeHTML(b.owner)} &middot; <span class="opacity-80">${escapeHTML(roomName(b.roomId))}</span></p>
         </div>
-        <span class="font-mono-num text-sm text-brand-600 dark:text-brand-300">${b.start}-${b.end}</span>
-      </div>`).join('') : `<p class="text-sm text-brand-400 text-center py-8">วันนี้ไม่มีการจอง</p>`;
+        <div class="text-right">
+          <span class="font-mono-num text-xs font-semibold px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 text-brand-800 dark:text-brand-200 border border-black/5 dark:border-white/10 flex items-center gap-1.5">
+            <i class="fa-regular fa-clock text-gold-500 text-[11px]"></i>${b.start} - ${b.end}
+          </span>
+        </div>
+      </div>`).join('') : `<p class="text-sm text-brand-400 text-center py-8">วันนี้ไม่มีรายการจอง</p>`;
 
     Charts.renderUsageChart();
   }
@@ -628,15 +632,15 @@ const Manage = {
     document.getElementById('mgEmpty').classList.toggle('hidden', rows.length>0);
     tbody.innerHTML = rows.map(b=>{
       const busy = b.date===todayStr() && isNowWithin(b);
-      return `<tr>
-        <td class="font-medium">${escapeHTML(b.title)}</td>
-        <td class="font-mono-num text-xs">${b.date}</td>
-        <td class="font-mono-num text-xs">${b.start}-${b.end}</td>
-        <td>${escapeHTML(b.owner)}</td>
+      return `<tr class="hover:bg-gold-500/5 transition-colors">
+        <td class="font-semibold text-brand-900 dark:text-white">${escapeHTML(b.title)}</td>
+        <td class="font-mono-num text-xs text-brand-600 dark:text-brand-300"><i class="fa-regular fa-calendar mr-1 opacity-50"></i>${b.date}</td>
+        <td class="font-mono-num text-xs font-semibold"><span class="px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10">${b.start} - ${b.end}</span></td>
+        <td class="text-sm"><i class="fa-regular fa-user mr-1.5 text-brand-400"></i>${escapeHTML(b.owner)}</td>
         <td><span class="badge ${busy?'badge-busy':'badge-ok'}">${busy?'กำลังใช้งาน':'ปกติ'}</span></td>
         <td class="text-right whitespace-nowrap">
-          <button onclick="Booking.openForm('${b.id}')" class="btn-ghost btn !p-2 !rounded-lg" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
-          <button onclick="Manage.quickDelete('${b.id}')" class="btn-danger btn !p-2 !rounded-lg" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+          <button onclick="Booking.openForm('${b.id}')" class="btn-ghost btn !p-2 !rounded-xl text-gold-600 dark:text-gold-400 hover:!bg-gold-500/10" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+          <button onclick="Manage.quickDelete('${b.id}')" class="btn-danger btn !p-2 !rounded-xl hover:!bg-red-500/20" title="ลบ"><i class="fa-solid fa-trash"></i></button>
         </td>
       </tr>`;
     }).join('');
