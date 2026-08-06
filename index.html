@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>ระบบติดตามการใช้ห้องประชุม</title>
+<meta name="description" content="ระบบติดตามและจองห้องประชุม เชื่อมต่อ Google Calendar แบบเรียลไทม์">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Tailwind CSS (CDN build) -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- FullCalendar -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/th.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<!-- SheetJS (Excel export) + jsPDF (PDF export) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+  // Tailwind config: dark mode by class, custom brand tokens derived from design plan
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Playfair Display', 'serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+        },
+        letterSpacing: {
+          widest: '.15em',
+        },
+        colors: {
+          brand: {
+            50:  '#f5f5f5',
+            100: '#e5e5e5',
+            300: '#a3a3a3',
+            400: '#737373',
+            500: '#404040',
+            600: '#262626',
+            700: '#171717',
+            800: '#0f0f0f',
+            900: '#0a0a0a',
+          },
+          gold: {
+            200: '#f9f1d8',
+            300: '#f3e5ab',
+            400: '#e6c762',
+            500: '#d4af37', // Champagne Gold
+            600: '#b58843',
+          },
+          ok: '#4ade80',
+          busy: '#f87171',
+        },
+        boxShadow: {
+          soft: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+          card: '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
+          glow: '0 0 15px rgba(212, 175, 55, 0.4)',
+        },
+        keyframes: {
+          pulseDot: {
+            '0%,100%': { boxShadow: '0 0 0 0 rgba(74,222,128,.55)' },
+            '70%':     { boxShadow: '0 0 0 8px rgba(74,222,128,0)' },
+          },
+          pulseDotBusy: {
+            '0%,100%': { boxShadow: '0 0 0 0 rgba(248,113,113,.55)' },
+            '70%':     { boxShadow: '0 0 0 8px rgba(248,113,113,0)' },
+          },
+          fadeUp: {
+            '0%': { opacity: 0, transform: 'translateY(15px)' },
+            '100%': { opacity: 1, transform: 'translateY(0)' },
+          },
+          float: {
+            '0%, 100%': { transform: 'translateY(0)' },
+            '50%': { transform: 'translateY(-5px)' },
+          }
+        },
+        animation: {
+          pulseDot: 'pulseDot 2s infinite',
+          pulseDotBusy: 'pulseDotBusy 2s infinite',
+          fadeUp: 'fadeUp .5s cubic-bezier(0.4, 0, 0.2, 1) both',
+          float: 'float 6s ease-in-out infinite',
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  /* =========================================================
+     GLOBAL / TOKENS
+  ========================================================= */
+  :root{
+    /* Light neutrals */
+    --bg-light:#f5f5f5; --text-light:#171717; --card-bg-light:rgba(255,255,255,0.9);
+    /* Dark neutrals */
+    --brand-900:#0a0a0a; --brand-800:#151515; --brand-700:#262626; --brand-600:#383838; --brand-500:#4a4a4a;
+    /* Gold accent */
+    --gold-500:#d4af37; --gold-600:#c79b2a; --gold-400:#e5c45a;
+    --ok:#4ade80; --busy:#f87171;
+    /* Theme vars */
+    --bg-color:var(--bg-light);
+    --text-color:var(--text-light);
+    --card-bg:var(--card-bg-light);
+  }
+  html,body{ height:100%; }
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg-color);
+    color:var(--text-color);
+    -webkit-font-smoothing:antialiased;
+    transition:background-color .3s ease, color .3s ease;
+  }
+  html.dark body{ background:#0a0a0a; color:#e5e5e5; }
+  html.dark {
+    --bg-color:#0a0a0a;
+    --text-color:#e5e5e5;
+    --card-bg:rgba(23,23,23,0.7);
+  }
+  h1,h2,h3,h4,.font-display{ font-family:'Playfair Display',serif; letter-spacing:0.03em; }
+  .font-mono-num{ font-family:'JetBrains Mono',monospace; }
+
+  ::selection{ background:var(--gold-500); color:#0a0a0a; }
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:rgba(212,175,55,.2); border-radius:99px; }
+  ::-webkit-scrollbar-thumb:hover{ background:rgba(212,175,55,.4); }
+
+  a{ -webkit-tap-highlight-color: transparent; }
+  button{ cursor:pointer; }
+
+  /* Seal / logo mark */
+  .seal{
+    position:relative; display:grid; place-items:center;
+    width:44px; height:44px; border-radius:9999px;
+    background: radial-gradient(circle at 30% 30%, var(--brand-600), var(--brand-900));
+    box-shadow: 0 4px 15px rgba(0,0,0,.5), inset 0 0 0 1px rgba(212,175,55,.3);
+    color:var(--gold-500); font-family:'Playfair Display',serif; font-weight:600; font-size:18px;
+  }
+  .seal::after{
+    content:""; position:absolute; inset:-4px; border-radius:9999px;
+    border:1px solid rgba(212,175,55,.15);
+  }
+
+  /* Status dot */
+  .status-dot{ width:8px; height:8px; border-radius:9999px; display:inline-block; }
+  .status-dot.ok{ background:var(--ok); animation: pulseDot 2s infinite; }
+  .status-dot.busy{ background:var(--busy); animation: pulseDotBusy 2s infinite; }
+
+  /* Views */
+  .view{ display:none; }
+  .view.active{ display:block; animation: fadeUp .5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+  /* Cards - Glassmorphism & Depth */
+  .card{
+    background:var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius:20px;
+    border:1px solid rgba(0,0,0,0.06);
+    box-shadow:0 8px 30px -6px rgba(0,0,0,0.08);
+    transition:transform .3s ease, box-shadow .3s ease, border-color .3s;
+  }
+  .card:hover{ border-color:var(--gold-500); box-shadow:0 12px 35px -6px rgba(0,0,0,0.12), 0 0 15px var(--gold-500); }
+  html.dark .card{ background:rgba(23,23,23,0.7); border:1px solid rgba(255,255,255,0.07); box-shadow:0 8px 30px -6px rgba(0,0,0,0.4); }
+  html.dark .card:hover{ border-color:var(--gold-500); box-shadow:0 12px 35px -6px rgba(0,0,0,0.5), 0 0 15px var(--gold-500); }
+
+  .room-card{ transition: all .6s cubic-bezier(0.4, 0, 0.2, 1); }
+  .room-card:hover{ transform: translateY(-8px); box-shadow:0 25px 50px -12px rgba(0,0,0,0.15), 0 0 30px rgba(212,175,55,0.2); }
+  html.dark .room-card:hover{ box-shadow:0 25px 50px -12px rgba(0,0,0,0.8), 0 0 30px rgba(212,175,55,0.15); border-color: rgba(212,175,55,0.4); }
+
+  /* Sidebar */
+  /* Sidebar */
+  #adminSidebar{
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(0,0,0,0.08);
+  }
+  html.dark #adminSidebar{
+    background: rgba(10,10,10,0.95);
+    border-right: 1px solid rgba(255,255,255,0.08);
+  }
+  .side-link{
+    display:flex; align-items:center; gap:.85rem; padding:.75rem 1rem; border-radius:12px;
+    color:#404040; font-weight:500; font-size:.9rem; transition:all .3s ease;
+    margin-bottom:2px;
+  }
+  html.dark .side-link{ color:#d4d4d4; }
+  .side-link:hover{ background:rgba(0,0,0,0.05); color:var(--gold-600); transform:translateX(4px); }
+  html.dark .side-link:hover{ background:rgba(255,255,255,0.05); color:var(--gold-400); }
+  .side-link.active{ background:rgba(212,175,55,0.12); color:#171717; font-weight:600; border-left:3px solid var(--gold-600); border-radius:0 12px 12px 0; }
+  html.dark .side-link.active{ background:rgba(212,175,55,0.15); color:var(--gold-400); border-left-color:var(--gold-500); }
+
+  /* Buttons */
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.6rem; font-weight:500; border-radius:14px; padding:.75rem 1.25rem; font-size:.95rem; transition:all .4s cubic-bezier(0.4, 0, 0.2, 1); letter-spacing: 0.02em; }
+  .btn-primary{ background:var(--gold-500); color:#000; border:1px solid var(--gold-600); backdrop-filter:blur(4px); }
+  .btn-primary:hover{ background:var(--gold-600); color:#000; box-shadow: 0 4px 15px rgba(212,175,55,0.3); transform: translateY(-2px); }
+  html.dark .btn-primary{ background:var(--gold-500); color:#000; border:1px solid var(--gold-600); }
+  html.dark .btn-primary:hover{ background:var(--gold-400); box-shadow: 0 0 20px rgba(212,175,55,0.35); }
+  
+  .btn-gold{ background:linear-gradient(135deg, var(--gold-400), var(--gold-600)); color:#000; font-weight: 600; border: none; box-shadow: 0 4px 15px rgba(212,175,55,0.2); }
+  .btn-gold:hover{ box-shadow: 0 8px 25px rgba(212,175,55,0.4); transform: translateY(-2px); filter: brightness(1.1); }
+  
+  .btn-ghost{ background:transparent; color:#404040; border:1px solid rgba(0,0,0,0.12); }
+  html.dark .btn-ghost{ color:#d4d4d4; border-color:rgba(255,255,255,0.12); }
+  .btn-ghost:hover{ background:rgba(0,0,0,0.05); color:var(--gold-600); border-color:var(--gold-500); }
+  html.dark .btn-ghost:hover{ background:rgba(255,255,255,0.05); color:var(--gold-400); border-color:var(--gold-500); }
+  
+  .btn-danger{ background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.2); color:#dc2626; }
+  html.dark .btn-danger{ color:var(--busy); }
+  .btn-danger:hover{ background:rgba(248,113,113,.2); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(248,113,113,0.15); }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; transform: none !important; box-shadow: none !important; }
+
+  /* Inputs */
+  .field{
+    width:100%; border-radius:14px; border:1px solid rgba(0,0,0,.12); padding:.8rem 1rem;
+    background:rgba(255,255,255,0.9); font-family:'Inter',sans-serif; font-size:.95rem; color:#171717;
+    transition:all .4s ease; backdrop-filter: blur(8px);
+  }
+  html.dark .field{
+    border-color:rgba(255,255,255,.12); background:rgba(0,0,0,0.4); color:#f5f5f5;
+  }
+  .field:focus{ outline:none; border-color:var(--gold-600); box-shadow:0 0 0 3px rgba(212,175,55,.2); background:#fff; }
+  html.dark .field:focus{ border-color:var(--gold-500); background:rgba(0,0,0,0.6); }
+  
+  label.lbl{ font-size:.85rem; font-weight:600; color:#374151; margin-bottom:.5rem; display:block; letter-spacing: 0.03em; }
+  html.dark label.lbl{ color:#d1d5db; font-weight:500; }
+
+  /* Badges */
+  .badge{ font-size:.75rem; font-weight:500; padding:.3rem .8rem; border-radius:9999px; letter-spacing:.03em; border: 1px solid transparent; }
+  .badge-ok{ background:rgba(74,222,128,.15); color:#16a34a; border-color: rgba(74,222,128,.3); }
+  html.dark .badge-ok{ background:rgba(74,222,128,.1); color:#4ade80; border-color: rgba(74,222,128,.2); }
+  .badge-busy{ background:rgba(248,113,113,.15); color:#dc2626; border-color: rgba(248,113,113,.3); }
+  html.dark .badge-busy{ background:rgba(248,113,113,.1); color:#f87171; border-color: rgba(248,113,113,.2); }
+
+  /* Table */
+  table.datatable{ width:100%; border-collapse:separate; border-spacing:0; }
+  table.datatable th{ text-align:left; font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#374151; padding:1rem; border-bottom:1px solid rgba(0,0,0,.08); }
+  html.dark table.datatable th{ color:#cbd5e1; border-bottom-color:rgba(255,255,255,.08); }
+
+  table.datatable td{ padding:1rem; font-size:.9rem; border-bottom:1px solid rgba(0,0,0,.06); color:#171717; }
+  html.dark table.datatable td{ border-bottom-color:rgba(255,255,255,.06); color:#e5e5e5; }
+  table.datatable tr{ transition: background .3s; }
+  table.datatable tr:hover td{ background:rgba(212,175,55,.06); }
+
+  /* Modal */
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:60; display:none; align-items:center; justify-content:center; padding:1rem; }
+  .modal-backdrop.active{ display:flex; animation: fadeIn .4s ease; }
+  .modal-box{ background:#ffffff; border:1px solid rgba(0,0,0,0.1); color:#171717; border-radius:28px; width:100%; max-width:520px; max-height:92vh; overflow-y:auto; box-shadow:0 30px 60px -12px rgba(0,0,0,.2), 0 0 30px rgba(212,175,55,0.08); animation: fadeUp .5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  html.dark .modal-box{ background:rgba(20,20,20,0.95); border:1px solid rgba(212,175,55,0.2); color:#f5f5f5; box-shadow:0 30px 60px -12px rgba(0,0,0,.9), 0 0 30px rgba(212,175,55,0.05); }
+  @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+
+  /* FullCalendar theming */
+  .fc{ font-family:'Inter',sans-serif; --fc-border-color: rgba(0,0,0,.08); --fc-today-bg-color: rgba(212,175,55,.06); --fc-neutral-bg-color: transparent; --fc-page-bg-color: transparent; }
+  html.dark .fc{ --fc-border-color: rgba(255,255,255,.08); }
+  .fc-theme-standard td, .fc-theme-standard th{ border-color: rgba(0,0,0,.08); }
+  html.dark .fc-theme-standard td, html.dark .fc-theme-standard th{ border-color: rgba(255,255,255,.08); }
+  .fc .fc-toolbar-title, .fc .fc-col-header-cell-cushion, .fc .fc-daygrid-day-number{ color:#171717; font-family:'Playfair Display',serif; font-weight:600; }
+  html.dark .fc .fc-toolbar-title, html.dark .fc .fc-col-header-cell-cushion, html.dark .fc .fc-daygrid-day-number{ color:#f5f5f5; font-weight:500; }
+  .fc .fc-button{ background:rgba(0,0,0,0.04); border:1px solid rgba(0,0,0,0.1); color:#404040; text-transform:capitalize; box-shadow:none !important; border-radius:10px; font-weight:500; transition:all .4s ease; }
+  html.dark .fc .fc-button{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#a3a3a3; }
+  .fc .fc-button:hover{ background:rgba(0,0,0,0.08); color:var(--gold-600); transform: translateY(-1px); }
+  html.dark .fc .fc-button:hover{ background:rgba(255,255,255,0.1); color:var(--gold-400); }
+  .fc .fc-button-active{ background:rgba(212,175,55,0.15) !important; color:var(--gold-600) !important; border-color:var(--gold-500) !important; }
+  html.dark .fc .fc-button-active{ color:var(--gold-400) !important; }
+  .fc-event{ border:none !important; cursor:pointer; }
+  .fc-daygrid-event{ padding:3px 8px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.15); transition: transform 0.2s; }
+  .fc-daygrid-event:hover{ transform: scale(1.02); }
+
+  /* FullCalendar Popover Styling Fix (แก้ไขป๊อปอัปแสดงการจองซ้อนกัน) */
+  .fc-popover {
+    background: #ffffff !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25), 0 0 20px rgba(212, 175, 55, 0.1) !important;
+    z-index: 99 !important;
+    overflow: hidden !important;
+    min-width: 260px !important;
+  }
+  html.dark .fc-popover {
+    background: #171717 !important;
+    border-color: rgba(212, 175, 55, 0.3) !important;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.15) !important;
+  }
+  .fc-popover-header {
+    background: rgba(212, 175, 55, 0.12) !important;
+    padding: 8px 12px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    color: #171717 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  html.dark .fc-popover-header {
+    background: rgba(212, 175, 55, 0.2) !important;
+    color: #f5f5f5 !important;
+  }
+  .fc-popover-title {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+  }
+  .fc-popover-body {
+    padding: 8px !important;
+    max-height: 280px !important;
+    overflow-y: auto !important;
+  }
+  .fc-more-popover .fc-daygrid-event {
+    margin-bottom: 4px !important;
+  }
+  .fc-daygrid-more-link {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: var(--gold-600) !important;
+    background: rgba(212,175,55,0.1) !important;
+    padding: 2px 6px !important;
+    border-radius: 6px !important;
+    display: inline-block !important;
+    margin-top: 2px !important;
+  }
+  html.dark .fc-daygrid-more-link {
+    color: var(--gold-400) !important;
+    background: rgba(212,175,55,0.15) !important;
+  }
+
+  /* Skeleton loading */
+  .skel{ background:linear-gradient(90deg, rgba(0,0,0,.03) 25%, rgba(0,0,0,.06) 37%, rgba(0,0,0,.03) 63%); background-size:400% 100%; animation: skel 2s ease infinite; border-radius:12px; }
+  html.dark .skel{ background:linear-gradient(90deg, rgba(255,255,255,.02) 25%, rgba(255,255,255,.06) 37%, rgba(255,255,255,.02) 63%); }
+  @keyframes skel{ 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+
+  /* Toast */
+  #toastHost{ position:fixed; top:2rem; right:2rem; z-index:80; display:flex; flex-direction:column; gap:.85rem; }
+  .toast{ min-width:300px; max-width:400px; background:rgba(255,255,255,0.95); backdrop-filter:blur(16px); border:1px solid rgba(0,0,0,0.08); color:#171717; padding:1.25rem 1.5rem; border-radius:20px; box-shadow:0 20px 40px -10px rgba(0,0,0,.15); display:flex; gap:.85rem; align-items:flex-start; animation:fadeUp .4s cubic-bezier(0.4, 0, 0.2, 1) both; font-size:.95rem; font-weight: 400; }
+  html.dark .toast{ background:rgba(20,20,20,0.95); border-color:rgba(255,255,255,0.08); color:#f5f5f5; box-shadow:0 20px 40px -10px rgba(0,0,0,.7); }
+  .toast.ok{ border-left:4px solid var(--ok); } .toast.err{ border-left:4px solid var(--busy); } .toast.info{ border-left:4px solid var(--gold-500); }
+  .toast.ok i{ color:#16a34a; } html.dark .toast.ok i{ color:var(--ok); }
+  .toast.err i{ color:#dc2626; } html.dark .toast.err i{ color:var(--busy); }
+  .toast.info i{ color:var(--gold-600); } html.dark .toast.info i{ color:var(--gold-500); }
+
+  /* Utility */
+  .scrollbar-none::-webkit-scrollbar{ display:none; }
+  .divider{ border-top:1px solid rgba(0,0,0,.08); } 
+  html.dark .divider{ border-top-color:rgba(255,255,255,.08); } 
+
+  @media (max-width: 768px){
+    #adminSidebar{ position:fixed; left:-280px; top:0; bottom:0; width:280px; z-index:50; transition:left .4s cubic-bezier(0.4, 0, 0.2, 1); }
+    #adminSidebar.open{ left:0; }
+    #sidebarOverlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); backdrop-filter:blur(6px); z-index:45; }
+    #sidebarOverlay.active{ display:block; animation:fadeIn .4s ease; }
+  }
+
+  .print-only{ display:none; }
+  @media print{
+    #adminSidebar,#adminTopbar,.no-print{ display:none !important; }
+    .print-only{ display:block; }
+    body{ background:#fff; color:#000; }
+    .card{ background:#fff; border:1px solid #ddd; box-shadow:none; color:#000; transform:none !important; }
+  }
+</style>
+</head>
+
+<body class="font-body">
+
+<div id="toastHost"></div>
+
+<!-- =========================================================
+     PUBLIC TOPBAR
+========================================================= -->
+<header id="publicTopbar" class="sticky top-0 z-40 bg-white/80 dark:bg-black/60 backdrop-blur-xl border-b border-black/5 dark:border-white/5 shadow-soft">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-3.5 cursor-pointer group" onclick="Router.go('public')">
+      <img src="https://act.lru.ac.th/images/lru.png" alt="LRU Logo" class="w-11 h-11 object-contain drop-shadow-[0_0_10px_rgba(212,175,55,0.3)] group-hover:scale-105 transition-transform duration-500">
+      <div class="leading-tight">
+        <p class="font-display font-semibold text-[15px] sm:text-lg text-brand-900 dark:text-white tracking-wide">ระบบติดตามห้องประชุม</p>
+        <p class="text-[10px] sm:text-[11px] text-gold-500 hidden sm:block uppercase tracking-widest mt-0.5">Meeting Room Tracking System</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="UI.toggleDark()" class="btn-ghost btn !px-3" title="สลับโหมดมืด/สว่าง">
+        <i class="fa-solid fa-circle-half-stroke"></i>
+      </button>
+      <button id="publicLoginBtn" onclick="Router.go('login')" class="btn btn-primary !px-4">
+        <i class="fa-solid fa-user-shield"></i><span class="hidden sm:inline">เข้าสู่ระบบผู้ดูแล</span><span class="sm:hidden">Login</span>
+      </button>
+      <button id="publicAdminBtn" onclick="Router.go('dashboard')" class="hidden btn btn-gold !px-4">
+        <i class="fa-solid fa-gauge"></i><span class="hidden sm:inline">ไปที่แดชบอร์ด</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- =========================================================
+     1) PUBLIC HOME
+========================================================= -->
+<main id="view-public" class="view active max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <p class="text-[11px] font-medium tracking-[0.2em] text-gold-500 uppercase drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">สถานะเรียลไทม์</p>
+      <h1 class="font-display text-2xl sm:text-3xl font-bold text-brand-900 dark:text-white tracking-wide mt-1">สถานะห้องประชุมวันนี้</h1>
+      <p id="publicTodayLabel" class="text-[13px] text-brand-500 dark:text-brand-300 mt-1 font-medium"></p>
+    </div>
+    <div class="flex items-center gap-5 text-[13px] font-medium bg-white/60 dark:bg-black/40 backdrop-blur-md px-4 py-2.5 rounded-xl border border-black/5 dark:border-white/5">
+      <span class="flex items-center gap-2.5"><span class="status-dot ok shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span>ว่าง</span>
+      <span class="flex items-center gap-2.5"><span class="status-dot busy shadow-[0_0_10px_rgba(248,113,113,0.5)]"></span>ไม่ว่าง</span>
+    </div>
+  </div>
+
+  <div id="publicRoomGrid" class="w-full"></div>
+
+  <div class="grid lg:grid-cols-3 gap-6 pt-1">
+    <div class="lg:col-span-2 card p-5 sm:p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-display font-semibold text-lg sm:text-xl text-brand-800 dark:text-white tracking-wide"><i class="fa-regular fa-calendar-days mr-2.5 text-gold-500 opacity-90"></i>ปฏิทินการใช้งาน</h2>
+      </div>
+      <div id="publicCalendar"></div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="font-display font-semibold text-lg sm:text-xl text-brand-800 dark:text-white mb-4 tracking-wide"><i class="fa-regular fa-clock mr-2.5 text-gold-500 opacity-90"></i>รายการที่กำลังจะถึง</h2>
+      <div id="publicUpcomingList" class="space-y-2 max-h-[420px] overflow-y-auto scrollbar-none"></div>
+    </div>
+  </div>
+
+  <footer class="text-center text-xs text-brand-400 dark:text-brand-300 pt-3 pb-6 divider">
+    <p>เชื่อมต่อข้อมูลผ่าน Google Calendar API &middot; อัปเดตอัตโนมัติ</p>
+  </footer>
+</main>
+
+<!-- Public event detail modal -->
+<div id="modal-eventDetail" class="modal-backdrop">
+  <div class="modal-box">
+    <div class="p-5 border-b divider flex items-center justify-between">
+      <h3 class="font-display font-semibold text-lg" id="edTitle">รายละเอียดการประชุม</h3>
+      <button onclick="UI.closeModal('modal-eventDetail')" class="btn-ghost btn !p-2 !rounded-full"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-5 space-y-3 text-sm" id="edBody"></div>
+  </div>
+</div>
+
+<!-- =========================================================
+     2) LOGIN (Admin only)
+========================================================= -->
+<main id="view-login" class="view">
+  <div class="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+    <!-- Decorative Background elements -->
+    <div class="absolute inset-0 bg-gradient-to-br from-[#050505] to-[#121212] -z-10"></div>
+    <div class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-gold-600/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none animate-float"></div>
+    <div class="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-brand-500/15 rounded-full blur-[120px] mix-blend-screen pointer-events-none animate-float" style="animation-delay: -3s;"></div>
+
+    <div class="w-full max-w-md p-8 sm:p-12 relative z-10 backdrop-blur-3xl bg-black/40 border border-white/5 shadow-[0_20px_60px_-12px_rgba(0,0,0,0.9)] rounded-[32px] transition-all duration-700 hover:border-gold-500/20 hover:shadow-[0_25px_65px_-12px_rgba(212,175,55,0.15)]">
+      <div class="flex flex-col items-center text-center mb-10">
+        <img src="https://act.lru.ac.th/images/lru.png" alt="LRU Logo" class="w-24 h-24 object-contain mb-6 hover:scale-105 transition-transform duration-700 drop-shadow-[0_10px_20px_rgba(212,175,55,0.2)]">
+        <h1 class="font-display text-3xl sm:text-4xl font-bold text-white tracking-wide">เข้าสู่ระบบผู้ดูแล</h1>
+        <p class="text-sm text-gold-500 mt-3 font-medium tracking-[0.05em] uppercase text-opacity-80">ระบบบริหารจัดการห้องประชุม</p>
+      </div>
+      <form id="loginForm" class="space-y-5" onsubmit="Auth.handleLogin(event)">
+        <div>
+          <label class="lbl text-[12px] sm:text-[13px] uppercase tracking-wider mb-2 opacity-80">ชื่อผู้ใช้ / Username</label>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-400 group-focus-within:text-brand-600 transition-colors">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <input required id="loginUser" class="field !pl-10 !py-3 sm:!py-3.5 !rounded-xl !bg-white/60 dark:!bg-black/20 focus:!bg-white dark:focus:!bg-black/40 backdrop-blur-sm border-white/40 shadow-inner transition-all" placeholder="กรอกชื่อผู้ใช้..." autocomplete="username">
+          </div>
+        </div>
+        <div>
+          <label class="lbl text-[12px] sm:text-[13px] uppercase tracking-wider mb-2 opacity-80">รหัสผ่าน / Password</label>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-400 group-focus-within:text-brand-600 transition-colors">
+              <i class="fa-solid fa-lock"></i>
+            </div>
+            <input required id="loginPass" type="password" class="field !pl-10 !pr-10 !py-3 sm:!py-3.5 !rounded-xl !bg-white/60 dark:!bg-black/20 focus:!bg-white dark:focus:!bg-black/40 backdrop-blur-sm border-white/40 shadow-inner transition-all" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" onclick="UI.togglePassword('loginPass', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-brand-400 hover:text-brand-600 p-1 transition-colors">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <p id="loginError" class="hidden text-sm text-busy bg-red-50/90 dark:bg-red-900/40 backdrop-blur-md rounded-xl px-4 py-3 border border-red-100 dark:border-red-800/50 flex items-center gap-2 animate-fadeUp">
+          <i class="fa-solid fa-circle-exclamation text-lg"></i><span></span>
+        </p>
+        
+        <div class="pt-3 flex flex-col gap-3 sm:gap-4">
+          <button type="submit" class="btn btn-primary w-full justify-center !py-3 sm:!py-3.5 !rounded-xl !text-[15px] shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 hover:-translate-y-0.5 transition-all duration-300 font-semibold group">
+            เข้าสู่ระบบ <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+          </button>
+          <button type="button" onclick="Router.go('public')" class="btn btn-ghost w-full justify-center !py-3 sm:!py-3.5 !rounded-xl hover:bg-brand-500/10 transition-colors duration-300 font-medium border-brand-500/20">
+            <i class="fa-solid fa-house text-[13px] mr-2 opacity-70"></i> กลับหน้าหลัก
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<!-- =========================================================
+     ADMIN SHELL (Dashboard / Calendar / Manage / Report / Settings)
+========================================================= -->
+<div id="adminShell" class="hidden min-h-screen">
+  <div id="sidebarOverlay" onclick="UI.closeSidebar()"></div>
+
+  <aside id="adminSidebar" class="fixed top-0 left-0 h-screen w-64 flex flex-col z-50">
+    <div class="flex items-center gap-3 px-5 h-16 border-b border-black/5 dark:border-white/10">
+      <img src="https://act.lru.ac.th/images/lru.png" alt="LRU Logo" class="w-10 h-10 object-contain drop-shadow-sm">
+      <div class="leading-tight">
+        <p class="font-display font-semibold text-brand-800 dark:text-white text-sm">Admin Panel</p>
+        <p class="text-[10px] text-brand-500 dark:text-brand-300">ระบบห้องประชุม</p>
+      </div>
+      <button onclick="UI.closeSidebar()" class="ml-auto md:hidden text-brand-500 dark:text-white/70"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-none">
+      <a href="#" data-page="dashboard" onclick="Router.go('dashboard');return false;" class="side-link"><i class="fa-solid fa-gauge-high"></i>แดชบอร์ด</a>
+      <a href="#" data-page="calendar" onclick="Router.go('calendar');return false;" class="side-link"><i class="fa-regular fa-calendar-days"></i>ปฏิทิน</a>
+      <a href="#" data-page="manage" onclick="Router.go('manage');return false;" class="side-link"><i class="fa-solid fa-list-check"></i>จัดการการจอง</a>
+      <a href="#" data-page="report" onclick="Router.go('report');return false;" class="side-link"><i class="fa-solid fa-chart-column"></i>รายงาน</a>
+      <a href="#" data-page="settings" onclick="Router.go('settings');return false;" class="side-link"><i class="fa-solid fa-gear"></i>ตั้งค่า</a>
+      <div class="pt-2 mt-2 border-t border-black/5 dark:border-white/10">
+        <a href="#" onclick="Router.go('public');return false;" class="side-link"><i class="fa-solid fa-house"></i>หน้าเว็บสาธารณะ</a>
+      </div>
+    </nav>
+    <div class="p-3 border-t border-black/5 dark:border-white/10">
+      <button onclick="Auth.logout()" class="side-link w-full text-left !text-red-500 dark:!text-red-300"><i class="fa-solid fa-right-from-bracket"></i>ออกจากระบบ</button>
+    </div>
+  </aside>
+
+  <div class="md:pl-64 flex-1 flex flex-col min-h-screen w-full">
+    <header id="adminTopbar" class="sticky top-0 z-30 bg-white/90 dark:bg-brand-900/90 backdrop-blur border-b border-black/5 dark:border-white/10 h-16 flex items-center px-4 sm:px-6 gap-3">
+      <button onclick="UI.openSidebar()" class="md:hidden btn-ghost btn !p-2"><i class="fa-solid fa-bars"></i></button>
+      <h1 id="adminPageTitle" class="font-display font-semibold text-lg text-brand-800 dark:text-white">แดชบอร์ด</h1>
+      <div class="ml-auto flex items-center gap-2">
+        <button onclick="UI.toggleDark()" class="btn-ghost btn !px-3"><i class="fa-solid fa-circle-half-stroke"></i></button>
+        <div class="flex items-center gap-2 pl-2 border-l border-black/10 dark:border-white/10">
+          <div class="w-8 h-8 rounded-full bg-brand-600 text-white grid place-items-center text-xs font-semibold">AD</div>
+          <span class="text-sm hidden sm:inline">ผู้ดูแลระบบ</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto">
+
+      <!-- 3) DASHBOARD -->
+      <section id="view-dashboard" class="view">
+        <p id="dashDateLabel" class="text-sm text-brand-500 dark:text-brand-300 mb-4"></p>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="card p-4">
+            <p class="text-xs text-brand-600 dark:text-brand-300 font-medium mb-1">สถานะห้องตอนนี้</p>
+            <p class="font-display text-2xl font-bold text-ok" id="statFree">–</p>
+            <p class="text-[11px] text-brand-500 dark:text-brand-400 mt-1 truncate" id="statFreeSub">อัปเดตล่าสุด</p>
+          </div>
+          <div class="card p-4">
+            <p class="text-xs text-brand-600 dark:text-brand-300 font-medium mb-1">รายการจองวันนี้</p>
+            <p class="font-display text-2xl font-bold text-brand-800 dark:text-white" id="statToday">–</p>
+            <p class="text-[11px] text-brand-500 dark:text-brand-400 mt-1">การจองทั้งหมดในวันนี้</p>
+          </div>
+          <div class="card p-4">
+            <p class="text-xs text-brand-600 dark:text-brand-300 font-medium mb-1">รวมชั่วโมงใช้งาน</p>
+            <p class="font-display text-2xl font-bold text-gold-600 dark:text-gold-400" id="statHours">–</p>
+            <p class="text-[11px] text-brand-500 dark:text-brand-400 mt-1">ชั่วโมง (วันนี้)</p>
+          </div>
+          <div class="card p-4">
+            <p class="text-xs text-brand-600 dark:text-brand-300 font-medium mb-1">อัตราความหนาแน่น</p>
+            <p class="font-display text-2xl font-bold text-brand-800 dark:text-white" id="statUtil">–</p>
+            <p class="text-[11px] text-brand-500 dark:text-brand-400 mt-1">เทียบกับเวลาทำการ</p>
+          </div>
+        </div>
+
+        <div class="card p-4 sm:p-5 mb-6">
+          <h3 class="font-display font-semibold mb-3 text-brand-800 dark:text-white"><i class="fa-solid fa-chart-column mr-2 text-gold-500"></i>เทรนด์ความหนาแน่น (7 วันล่าสุด)</h3>
+          <canvas id="chartUsage" height="80"></canvas>
+        </div>
+
+        <div class="card p-4 sm:p-5">
+          <h3 class="font-display font-semibold mb-3 text-brand-800 dark:text-white"><i class="fa-regular fa-clock mr-2 text-gold-500"></i>รายการวันนี้</h3>
+          <div id="dashTodayList" class="space-y-2"></div>
+        </div>
+      </section>
+
+      <!-- 4) CALENDAR -->
+      <section id="view-calendar" class="view">
+        <div class="card p-4 sm:p-5 mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 class="font-display font-semibold text-brand-800 dark:text-white">ปฏิทินการจองห้องประชุม</h3>
+          <button onclick="Booking.openForm(null)" class="btn btn-gold"><i class="fa-solid fa-plus"></i>เพิ่มการจอง</button>
+        </div>
+        <div class="card p-3 sm:p-5">
+          <div id="adminCalendar"></div>
+        </div>
+      </section>
+
+      <!-- 5) MANAGE (CRUD) -->
+      <section id="view-manage" class="view">
+        <div class="card p-4 sm:p-5 mb-4 flex flex-wrap gap-3 items-end">
+          <div class="flex-1 min-w-[180px]">
+            <label class="lbl">ค้นหาหัวข้อ / ผู้จอง</label>
+            <input id="mgSearch" class="field" placeholder="พิมพ์ค้นหา..." oninput="Manage.render()">
+          </div>
+          <div>
+            <label class="lbl">ช่วงเวลา</label>
+            <select id="mgDateFilter" class="field !w-auto" onchange="Manage.render()">
+              <option value="all">ทั้งหมด</option>
+              <option value="today">วันนี้</option>
+              <option value="week">สัปดาห์นี้</option>
+              <option value="month">เดือนนี้</option>
+            </select>
+          </div>
+          <button onclick="Booking.openForm(null)" class="btn btn-gold"><i class="fa-solid fa-plus"></i>เพิ่มการจอง</button>
+        </div>
+        <div class="card overflow-x-auto">
+          <table class="datatable">
+            <thead>
+              <tr>
+                <th>หัวข้อการประชุม</th><th>วันที่</th><th>เวลา</th><th>ผู้จอง</th><th>สถานะ</th><th class="text-right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="mgTableBody"></tbody>
+          </table>
+          <p id="mgEmpty" class="hidden text-center text-sm text-brand-400 py-10">ไม่พบรายการจอง</p>
+        </div>
+      </section>
+
+      <!-- 6) REPORT -->
+      <section id="view-report" class="view">
+        <div class="card p-4 sm:p-5 mb-4 flex flex-wrap items-end gap-3">
+          <div>
+            <label class="lbl">ประเภทรายงาน</label>
+            <select id="repType" class="field !w-auto" onchange="Report.render()">
+              <option value="daily">รายวัน</option>
+              <option value="monthly">รายเดือน</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">เลือกวันที่ / เดือน</label>
+            <input id="repDate" type="date" class="field !w-auto" onchange="Report.render()">
+          </div>
+          <div class="ml-auto flex gap-2">
+            <button onclick="Report.exportExcel()" class="btn btn-ghost"><i class="fa-solid fa-file-excel text-ok"></i>Export Excel</button>
+            <button onclick="Report.exportPDF()" class="btn btn-ghost"><i class="fa-solid fa-file-pdf text-busy"></i>Export PDF</button>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4 mb-4">
+          <div class="card p-4"><p class="text-xs text-brand-600 dark:text-brand-300 font-medium mb-1">จำนวนการจองรวม</p><p class="font-display text-xl font-bold text-brand-800 dark:text-white" id="repCount">–</p></div>
+          <div class="card p-4"><p class="text-xs text-brand-600 dark:text-brand-300 font-medium mb-1">รวมชั่วโมงใช้งาน</p><p class="font-display text-xl font-bold text-gold-600 dark:text-gold-400" id="repHours">–</p></div>
+        </div>
+
+
+
+        <div id="reportPrintArea" class="card overflow-x-auto">
+          <table class="datatable">
+            <thead><tr><th>วันที่</th><th>หัวข้อ</th><th>เวลา</th><th>ผู้จอง</th><th>ชั่วโมง</th></tr></thead>
+            <tbody id="repTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 7) SETTINGS -->
+      <section id="view-settings" class="view">
+        <div class="grid lg:grid-cols-2 gap-6">
+
+
+          <div class="card p-5">
+            <h3 class="font-display font-semibold mb-4 text-brand-800 dark:text-white"><i class="fa-regular fa-clock mr-2 text-gold-500"></i>เวลาเปิดทำการ</h3>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <div><label class="lbl">เวลาเปิด</label><input id="setOpenTime" type="time" class="field"></div>
+              <div><label class="lbl">เวลาปิด</label><input id="setCloseTime" type="time" class="field"></div>
+            </div>
+            <button onclick="Settings.saveHours()" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i>บันทึกเวลาทำการ</button>
+          </div>
+
+          <div class="card p-5">
+            <h3 class="font-display font-semibold mb-4 text-brand-800 dark:text-white"><i class="fa-brands fa-google mr-2 text-gold-500"></i>Google API</h3>
+            <div class="space-y-3">
+              <div><label class="lbl">Google Apps Script Web App URL</label><input id="setGasUrl" class="field font-mono-num text-xs" placeholder="https://script.google.com/macros/s/xxxxx/exec"></div>
+              <div><label class="lbl">Google Calendar ID</label><input id="setCalId" class="field font-mono-num text-xs" placeholder="[email protected]"></div>
+              <button onclick="Settings.saveApi()" class="btn btn-primary"><i class="fa-solid fa-plug"></i>บันทึกการเชื่อมต่อ</button>
+              <button onclick="Settings.testConnection()" class="btn btn-ghost"><i class="fa-solid fa-vial"></i>ทดสอบการเชื่อมต่อ</button>
+              <p class="text-[11px] text-brand-500 dark:text-brand-300">ระบบใช้ Google Calendar เป็นฐานข้อมูลผ่าน Google Apps Script (ดูตัวอย่าง Code.gs ที่แนบมา)</p>
+            </div>
+          </div>
+
+          <div class="card p-5">
+            <h3 class="font-display font-semibold mb-4 text-brand-800 dark:text-white"><i class="fa-solid fa-user-shield mr-2 text-gold-500"></i>บัญชีผู้ดูแลระบบ</h3>
+            <div class="space-y-3">
+              <div><label class="lbl">ชื่อผู้ใช้ใหม่</label><input id="setNewUser" class="field" placeholder="admin"></div>
+              <div><label class="lbl">รหัสผ่านใหม่</label><input id="setNewPass" type="password" class="field" placeholder="••••••••"></div>
+              <button onclick="Settings.updateAdmin()" class="btn btn-primary"><i class="fa-solid fa-key"></i>เปลี่ยนรหัสผ่าน</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <footer class="text-center text-[11px] text-brand-400 py-4">ระบบติดตามการใช้ห้องประชุม &middot; เชื่อมต่อ Google Calendar API</footer>
+  </div>
+</div>
+
+<!-- Booking Add/Edit Modal -->
+<div id="modal-booking" class="modal-backdrop">
+  <div class="modal-box">
+    <div class="p-5 border-b divider flex items-center justify-between">
+      <h3 class="font-display font-semibold text-lg" id="bkModalTitle">เพิ่มการจอง</h3>
+      <button onclick="UI.closeModal('modal-booking')" class="btn-ghost btn !p-2 !rounded-full"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="bookingForm" class="p-5 space-y-4" onsubmit="Booking.save(event)">
+      <input type="hidden" id="bkId">
+      <!-- Anti-Bot Honeypot field (hidden from real users) -->
+      <div style="display:none;" aria-hidden="true">
+        <input type="text" id="bkWebsiteHp" name="website_hp" tabindex="-1" autocomplete="off">
+      </div>
+      <div>
+        <label class="lbl">หัวข้อการประชุม</label>
+        <input required id="bkTitle" class="field" placeholder="เช่น ประชุมทีมการตลาด">
+      </div>
+      <div class="hidden">
+        <select required id="bkRoom" class="field"></select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">วันที่</label><input required id="bkDate" type="date" class="field"></div>
+        <div><label class="lbl">ผู้จอง</label><input required id="bkOwner" class="field" placeholder="ชื่อผู้จอง"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">เวลาเริ่ม</label><input required id="bkStart" type="time" class="field"></div>
+        <div><label class="lbl">เวลาสิ้นสุด</label><input required id="bkEnd" type="time" class="field"></div>
+      </div>
+      <div>
+        <label class="lbl">หมายเหตุ</label>
+        <textarea id="bkNote" rows="2" class="field" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+      </div>
+      <p id="bkError" class="hidden text-xs text-busy bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2"></p>
+      <div class="flex gap-2 pt-2">
+        <button type="button" id="bkDeleteBtn" onclick="Booking.remove()" class="btn btn-danger hidden"><i class="fa-solid fa-trash"></i>ลบ</button>
+        <button type="submit" class="btn btn-primary flex-1 justify-center"><i class="fa-solid fa-floppy-disk"></i>บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div id="modal-confirm" class="modal-backdrop">
+  <div class="modal-box max-w-xs text-center p-6">
+    <div class="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 grid place-items-center mx-auto mb-3"><i class="fa-solid fa-triangle-exclamation text-busy text-xl"></i></div>
+    <p id="confirmText" class="text-sm mb-5">ยืนยันการลบรายการนี้หรือไม่?</p>
+    <div class="flex gap-2">
+      <button onclick="UI.closeModal('modal-confirm')" class="btn btn-ghost flex-1 justify-center">ยกเลิก</button>
+      <button id="confirmOkBtn" class="btn btn-danger flex-1 justify-center">ยืนยันลบ</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
